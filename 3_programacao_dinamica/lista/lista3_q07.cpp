@@ -27,7 +27,7 @@ int main()
 
 int maiorSubsequenciaCrescente(int *A, int n)
 {
-  int S[n], i, k;
+  int S[n], i, k, aux;
 
   for (i = 0; i < n; i++)
   {
@@ -37,7 +37,12 @@ int maiorSubsequenciaCrescente(int *A, int n)
     {
       if (A[k] < A[i])
       {
-        S[i] = S[k] + 1;
+        aux = S[k] + 1;
+
+        if (S[i] < aux)
+        {
+          S[i] = aux;
+        }
       }
     }
     printf("S[0...%d]: %d\n", i, S[i]);
