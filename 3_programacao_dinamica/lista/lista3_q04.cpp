@@ -10,7 +10,12 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+int startPositionIdx = 0;
+int startPositionTempIdx = 0;
+int endPositionIdx = 0;
+
 int solidez(int *A, int n);
+void rastreio(int *A);
 
 int main()
 {
@@ -18,35 +23,51 @@ int main()
 
   printf("Solução: %d\n", solidez(A, 9));
 
-  printf("Rastreio: \n");
+  rastreio(A);
 
   return 0;
 }
 
 int solidez(int *A, int n)
 {
-  int S[n];
+  int S[n], max, i;
 
-  for (int i = 0; i < n; i++)
+  S[0] = A[0];
+  max = A[0];
+
+  for (i = 1; i < n; i++)
   {
     S[i] = A[i];
-    if (i > 0)
-    {
-      if (S[i - 1] > 0)
-      {
-        S[i] = S[i - 1] + A[i];
-      }
-    }
-  }
 
-  int max = S[0];
-  for (int i = 1; i < n; i++)
-  {
+    if (S[i - 1] > 0)
+    {
+      S[i] = S[i - 1] + A[i];
+    }
+    else
+    {
+      startPositionTempIdx = i;
+    }
+
     if (max < S[i])
     {
       max = S[i];
+      startPositionIdx = startPositionTempIdx;
+      endPositionIdx = i;
     }
   }
 
+  // for (i = 0; i < n; i++)
+  //   printf("%d\n", S[i]);
+
   return max;
+}
+
+void rastreio(int *A)
+{
+  printf("Subvetor: [ ");
+  for (int i = startPositionIdx; i <= endPositionIdx; i++)
+  {
+    printf("%d ", A[i]);
+  }
+  printf("]\n");
 }
