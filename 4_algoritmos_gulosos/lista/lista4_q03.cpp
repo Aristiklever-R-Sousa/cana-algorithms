@@ -4,11 +4,6 @@ using namespace std;
 
 char *maxNumber(char *N, int n, int d);
 
-bool compare(const float &x, const float &y)
-{
-  return x > y;
-}
-
 int main()
 {
 
