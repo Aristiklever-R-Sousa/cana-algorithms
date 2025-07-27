@@ -5,7 +5,7 @@
    1. L[i,j]: tamanho da maior subseq. comum de A[0..i-1] e B[0..j-1]
    2. L[i,j]: 0, se i = 0 ou j = 0
               1 + L[i-1,j-1], se A[i-1] = B[j-1]
-              Max(L[i,j-1], L[i-1,j]), caso contrário
+              max(L[i,j-1], L[i-1,j]), caso contrário
    3. L[m,n] = ?
    ================================================================== */
 
