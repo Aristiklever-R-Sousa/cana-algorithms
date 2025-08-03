@@ -23,6 +23,7 @@ char *maxNumber(char *N, int n, int d)
   char *maxNumber = (char *)malloc((n - d + 1) * sizeof(char));
   int maxNumberPosition = 0, i = 0, removes = 0;
 
+  // TODO: melhorar esse algoritimo
   for (i = 0; i < n; i++)
   {
     while (removes < d && maxNumberPosition > 0 && maxNumber[maxNumberPosition - 1] < N[i])

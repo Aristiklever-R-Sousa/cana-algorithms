@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Construção do Grafo 2-SAT</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .formula {
+      font-size: 28px;
+      font-weight: bold;
+      color: #ffd700;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      margin: 20px 0;
+    }
+
+    .step-container {
+      display: flex;
+      gap: 30px;
+      margin: 30px 0;
+      align-items: flex-start;
+    }
+
+    .clauses-panel {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+    }
+
+    .clause {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 15px;
+      margin: 10px 0;
+      font-size: 18px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 3px solid transparent;
+    }
+
+    .clause:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .clause.active {
+      border-color: #ffd700;
+      background: rgba(255, 215, 0, 0.2);
+    }
+
+    .implications {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #b0e0e6;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .implications.show {
+      opacity: 1;
+    }
+
+    .graph-panel {
+      flex: 2;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      position: relative;
+      min-height: 500px;
+    }
+
+    .graph-svg {
+      width: 100%;
+      height: 500px;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    .vertex {
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .vertex circle {
+      fill: #4a90e2;
+      stroke: #2c5aa0;
+      stroke-width: 2;
+    }
+
+    .vertex.positive circle {
+      fill: #4caf50;
+      stroke: #2e7d32;
+    }
+
+    .vertex.negative circle {
+      fill: #f44336;
+      stroke: #c62828;
+    }
+
+    .vertex text {
+      fill: white;
+      font-weight: bold;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+
+    .edge {
+      stroke: #ffd700;
+      stroke-width: 3;
+      fill: none;
+      marker-end: url(#arrowhead);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .edge.show {
+      opacity: 1;
+    }
+
+    .edge.highlight {
+      stroke: #ff6b6b;
+      stroke-width: 4;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .controls {
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    .btn {
+      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+      border: none;
+      color: white;
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      margin: 0 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .info-box {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 20px 0;
+      border-left: 5px solid #ffd700;
+    }
+
+    .step-counter {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 20px;
+      padding: 10px 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🕸️ Construção do Grafo de Implicações</h1>
+      <div class="formula">φ = (x₁ ∨ ¬x₂) ∧ (¬x₁ ∨ x₃) ∧ (x₂ ∨ ¬x₃) ∧ (¬x₂ ∨ ¬x₃)</div>
+    </div>
+
+    <div class="step-counter">
+      Passo: <span id="currentStep">0</span>/4
+    </div>
+
+    <div class="step-container">
+      <div class="clauses-panel">
+        <h3>📋 Cláusulas</h3>
+        <div class="clause" data-clause="0">
+          <div>C₁: (x₁ ∨ ¬x₂)</div>
+          <div class="implications">
+            ⟹ ¬x₁ → ¬x₂<br>
+            ⟹ x₂ → x₁
+          </div>
+        </div>
+        <div class="clause" data-clause="1">
+          <div>C₂: (¬x₁ ∨ x₃)</div>
+          <div class="implications">
+            ⟹ x₁ → x₃<br>
+            ⟹ ¬x₃ → ¬x₁
+          </div>
+        </div>
+        <div class="clause" data-clause="2">
+          <div>C₃: (x₂ ∨ ¬x₃)</div>
+          <div class="implications">
+            ⟹ ¬x₂ → ¬x₃<br>
+            ⟹ x₃ → x₂
+          </div>
+        </div>
+        <div class="clause" data-clause="3">
+          <div>C₄: (¬x₂ ∨ ¬x₃)</div>
+          <div class="implications">
+            ⟹ x₂ → ¬x₃<br>
+            ⟹ x₃ → ¬x₂
+          </div>
+        </div>
+      </div>
+
+      <div class="graph-panel">
+        <h3>🔗 Grafo de Implicações</h3>
+        <svg class="graph-svg" id="graphSvg">
+          <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#ffd700" />
+            </marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" onclick="previousStep()" id="prevBtn" disabled>⬅️ Anterior</button>
+      <button class="btn" onclick="nextStep()" id="nextBtn">Próximo ➡️</button>
+      <button class="btn" onclick="reset()">🔄 Reiniciar</button>
+    </div>
+
+    <div class="info-box" id="infoBox">
+      <strong>💡 Instruções:</strong> Clique em "Próximo" para ver como cada cláusula adiciona arestas ao grafo.
+      Observe como cada cláusula (a v b) se transforma em duas implicações: ¬a → b e ¬b → a.
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 0;
+    const totalSteps = 4;
+
+    const vertices = [
+      { id: 'x1', x: 150, y: 100, label: 'x₁', type: 'positive' },
+      { id: 'nx1', x: 350, y: 100, label: '¬x₁', type: 'negative' },
+      { id: 'x2', x: 150, y: 250, label: 'x₂', type: 'positive' },
+      { id: 'nx2', x: 350, y: 250, label: '¬x₂', type: 'negative' },
+      { id: 'x3', x: 150, y: 400, label: 'x₃', type: 'positive' },
+      { id: 'nx3', x: 350, y: 400, label: '¬x₃', type: 'negative' }
+    ];
+
+    const edges = [
+      // Cláusula 1: (x₁ ∨ ¬x₂) → ¬x₁ → ¬x₂, x₂ → x₁
+      { from: 'nx1', to: 'nx2', clause: 0, step: 1 },
+      { from: 'x2', to: 'x1', clause: 0, step: 1 },
+      // Cláusula 2: (¬x₁ ∨ x₃) → x₁ → x₃, ¬x₃ → ¬x₁
+      { from: 'x1', to: 'x3', clause: 1, step: 2 },
+      { from: 'nx3', to: 'nx1', clause: 1, step: 2 },
+      // Cláusula 3: (x₂ ∨ ¬x₃) → ¬x₂ → ¬x₃, x₃ → x₂
+      { from: 'nx2', to: 'nx3', clause: 2, step: 3 },
+      { from: 'x3', to: 'x2', clause: 2, step: 3 },
+      // Cláusula 4: (¬x₂ ∨ ¬x₃) → x₂ → ¬x₃, x₃ → ¬x₂
+      { from: 'x2', to: 'nx3', clause: 3, step: 4 },
+      { from: 'x3', to: 'nx2', clause: 3, step: 4 }
+    ];
+
+    const infoMessages = [
+      "💡 Começamos com os vértices: cada variável x tem dois nós (x e ¬x)",
+      "🎯 Cláusula 1: (x₁ v ¬x₂) gera duas setas: ¬x₁ → ¬x₂ e x₂ → x₁",
+      "🎯 Cláusula 2: (¬x₁ v x₃) gera duas setas: x₁ → x₃ e ¬x₃ → ¬x₁",
+      "🎯 Cláusula 3: (x₂ v ¬x₃) gera duas setas: ¬x₂ → ¬x₃ e x₃ → x₂",
+      "🎯 Cláusula 4: (¬x₂ v ¬x₃) gera duas setas: x₂ → ¬x₃ e x₃ → ¬x₂<br><br>✅ <strong>Grafo completo!</strong> Agora podemos encontrar as componentes fortemente conexas."
+    ];
+
+    function initGraph() {
+      const svg = document.getElementById('graphSvg');
+
+      // Criar vértices
+      vertices.forEach(v => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.classList.add('vertex', v.type);
+        g.setAttribute('id', `vertex-${v.id}`);
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', v.x);
+        circle.setAttribute('cy', v.y);
+        circle.setAttribute('r', 25);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', v.x);
+        text.setAttribute('y', v.y);
+        text.textContent = v.label;
+
+        g.appendChild(circle);
+        g.appendChild(text);
+        svg.appendChild(g);
+      });
+
+      // Criar arestas (inicialmente invisíveis)
+      edges.forEach((e, index) => {
+        const fromVertex = vertices.find(v => v.id === e.from);
+        const toVertex = vertices.find(v => v.id === e.to);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const controlX = (fromVertex.x + toVertex.x) / 2 + (Math.random() - 0.5) * 100;
+        const controlY = (fromVertex.y + toVertex.y) / 2 + (Math.random() - 0.5) * 50;
+
+        const d = `M ${fromVertex.x} ${fromVertex.y} Q ${controlX} ${controlY} ${toVertex.x} ${toVertex.y}`;
+        path.setAttribute('d', d);
+        path.classList.add('edge');
+        path.setAttribute('id', `edge-${index}`);
+        path.setAttribute('data-step', e.step);
+        path.setAttribute('data-clause', e.clause);
+
+        svg.appendChild(path);
+      });
+    }
+
+    function nextStep() {
+      if (currentStep < totalSteps) {
+        currentStep++;
+        updateDisplay();
+      }
+    }
+
+    function previousStep() {
+      if (currentStep > 0) {
+        currentStep--;
+        updateDisplay();
+      }
+    }
+
+    function reset() {
+      currentStep = 0;
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      document.getElementById('currentStep').textContent = currentStep;
+      document.getElementById('infoBox').innerHTML = `<strong>💡 Passo ${currentStep}:</strong> ${infoMessages[currentStep]}`;
+
+      // Atualizar botões
+      document.getElementById('prevBtn').disabled = currentStep === 0;
+      document.getElementById('nextBtn').disabled = currentStep === totalSteps;
+
+      // Atualizar cláusulas
+      document.querySelectorAll('.clause').forEach((clause, index) => {
+        clause.classList.remove('active');
+        const implications = clause.querySelector('.implications');
+        implications.classList.remove('show');
+
+        if (currentStep > 0 && index === currentStep - 1) {
+          clause.classList.add('active');
+          implications.classList.add('show');
+        }
+      });
+
+      // Atualizar arestas
+      document.querySelectorAll('.edge').forEach(edge => {
+        const edgeStep = parseInt(edge.getAttribute('data-step'));
+        edge.classList.remove('show', 'highlight');
+
+        if (currentStep >= edgeStep) {
+          edge.classList.add('show');
+          if (currentStep === edgeStep) {
+            edge.classList.add('highlight');
+          }
+        }
+      });
+    }
+
+    // Inicializar
+    initGraph();
+    updateDisplay();
+  </script>
+</body>
+
+</html>

@@ -56,20 +56,6 @@ int maxActivitiesCount(Activity *A, int n)
       qtt++;
     }
 
-    // if (A[i].startTime >= maxEnd || maxStart >= A[i].endTime)
-    // {
-    //   if (A[i].startTime < maxStart)
-    //   {
-    //     maxStart = A[i].startTime;
-    //   }
-    //   if (A[i].endTime > maxEnd)
-    //   {
-    //     maxEnd = A[i].endTime;
-    //   }
-
-    //   qtt++;
-    // }
-
     printf("ID->%d|S->%d|F->%d\n", A[i].id, A[i].startTime, A[i].endTime);
   }
 
